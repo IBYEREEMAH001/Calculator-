@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>IBYEREEMAH Scientific Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e9eef8;--ink:#0b1b3a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1226;--ink:#e8eefc}}
+:root[data-theme="dark"]{--bg:#0a1226;--ink:#e8eefc}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Roboto,system-ui,sans-serif;display:flex;justify-content:center}
+.calc{width:100%;max-width:440px;min-height:100vh;padding:10px;background:linear-gradient(180deg,var(--b1),var(--b2));color:var(--tx);display:flex;flex-direction:column;gap:8px;position:relative}
+.top{display:flex;align-items:center;gap:8px}
+.brand{flex:1}.brand h1{margin:0;font:700 30px/1 Teko,Impact,sans-serif;letter-spacing:4px}.brand small{font-size:11px;color:var(--mt)}
+.ib{background:none;border:0;color:var(--tx);font-size:22px;padding:4px 8px}
+.modes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.modes button{border:1px solid var(--ln);background:var(--pn);color:var(--mt);border-radius:10px;padding:8px 0;font-weight:700;font-size:13px}
+.modes button.on{background:var(--a);color:#fff;border-color:var(--a)}
+.screen{background:var(--sc);color:var(--sct);border-radius:18px;padding:12px 16px;min-height:110px;display:flex;flex-direction:column;justify-content:space-between}
+.flags{font-size:11px;font-weight:700;color:#a3202c;min-height:14px;letter-spacing:.5px}
+.lbl{font-size:11px;font-weight:700;color:#3a5a99}
+.inp{font-size:26px;text-align:right;word-break:break-all;min-height:34px;border-bottom:1px solid #e6b8b3;padding-bottom:4px}
+.inp::after{content:"";display:inline-block;width:2px;height:26px;background:currentColor;vertical-align:-4px;margin-left:2px;animation:bl 1s steps(1) infinite}
+@keyframes bl{50%{opacity:0}}
+.sol{display:flex;justify-content:flex-end;align-items:center;gap:10px;font-size:28px;font-weight:600;min-height:40px}
+.sol.prev{opacity:.5}.sol.err{color:#b3261e;font-size:22px}
+.cp{border:0;background:#f3c4be;border-radius:8px;padding:6px 8px;font-size:15px}
+.keys{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.k{position:relative;border:0;border-radius:12px;background:var(--kb,#fff);color:var(--kt,#1a2a4a);font-size:15px;font-weight:600;height:46px;padding-top:9px;box-shadow:0 2px 0 #9fb0cf}
+.k:active{transform:translateY(2px);box-shadow:none}
+.k .sub{position:absolute;top:3px;left:0;right:0;font-size:9px;font-weight:700;display:flex;justify-content:center;gap:6px}
+.sub .s{color:#d28a00}.sub .al{color:#7a3fd0}
+.k.shift{background:#f5a623;color:#fff}.k.alpha{background:#8b4fe0;color:#fff}
+.k.del{background:#ff9a9a;color:#7a0b0b}.k.ac{background:#ff7676;color:#7a0b0b}
+.k.on{outline:3px solid #6fe3ff}
+.num{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:2px}
+.num .k{height:58px;font-size:22px;padding-top:0}
+.num .op{filter:brightness(.94)}
+.num .eq{grid-column:5;grid-row:2/5;height:auto;background:var(--a);color:#fff;font-size:30px}
+.hist{position:absolute;inset:0;background:var(--b2);padding:14px;overflow:auto;display:none;z-index:5}
+.hist.show{display:block}
+.hist h2{margin:0 0 10px;font-size:17px}
+.hi{padding:10px;border-bottom:1px solid var(--ln);text-align:right}
+.hi small{display:block;color:var(--mt)}.hi b{font-size:20px}
+.empty{color:var(--mt)}
+.toast{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:#000c;color:#fff;padding:6px 12px;border-radius:14px;font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){.inp::after{animation:none}}
+
+.calc{--b1:#3d0b12;--b2:#1c0509;--tx:#fff;--ln:#7a1c26;--pn:#4a0f17;--mt:#ff9aa5;--a:#e5232f;--sc:#ffe4e1;--sct:#3a0a10}
+.calc.lt{--b1:#fff1f1;--b2:#ffd6d6;--tx:#3a0a10;--ln:#f0aaaa;--pn:#ffe3e3;--mt:#b3202c;--sc:#fff}
+.fr{display:flex;justify-content:space-between;align-items:center}.wm{font:700 13px Teko,sans-serif;letter-spacing:3px;color:#a3202c}
+.panel,.dr{position:absolute;inset:0;z-index:6;display:none}.panel.show,.dr.show{display:block}
+.panel{background:linear-gradient(180deg,var(--b1),var(--b2));padding:12px;overflow:auto}
+.ph{display:flex;align-items:center;gap:8px;margin-bottom:10px}.ph h2{margin:0;font-size:18px}
+.fld{display:block;margin-bottom:10px;font-size:12px;color:var(--mt)}
+.fld input,.fld select{display:block;width:100%;margin-top:4px;padding:11px;border-radius:10px;border:1px solid var(--ln);background:#fff;color:#1a1a1a;font-size:16px}
+.btns{display:flex;gap:8px;margin:12px 0}.btns button{flex:1;padding:12px;border-radius:24px;border:1px solid var(--a);font-weight:700;font-size:15px;background:transparent;color:var(--tx)}.btns .go{background:var(--a);color:#fff}
+.res{background:var(--pn);border-radius:14px;padding:4px 12px}.rw{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--ln);white-space:pre-wrap;text-align:right}.rw:last-child{border:0}.rw span:first-child{color:var(--mt);text-align:left}.rw.e{color:#ff8a8a}
+canvas{width:100%;background:#fff;border-radius:12px;margin-top:10px}
+.dr{background:#000a}.dp{width:78%;max-width:340px;height:100%;background:linear-gradient(180deg,var(--b1),var(--b2));overflow:auto;padding:14px}
+.dp .dh b{display:block;font:700 30px Teko,sans-serif;letter-spacing:4px}.dp small{color:var(--mt)}
+.dp button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--tx);padding:12px 6px;font-size:16px;border-bottom:1px solid var(--ln)}
+.dp h3{margin:14px 0 4px;font-size:11px;color:var(--mt);letter-spacing:1px}
+.kc{background:var(--pn);border-radius:12px;padding:10px;margin-bottom:8px}.kc b{display:block}.kc small{color:var(--mt);word-break:break-all}.kc .btns{margin:8px 0 0}.kc .btns button{padding:7px}
+.sw{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--ln)}.sw select{padding:7px;border-radius:8px}.sw input{width:22px;height:22px}
+.cmp .k{height:38px;padding-top:7px}.cmp .num .k{height:46px;padding-top:0}.lg .inp{font-size:34px}.lg .sol{font-size:36px}.nosec .sub{display:none}
+</style>
+</head>
+<body>
+<div class="calc" id="calc">
+  <div class="top"><button class="ib" id="menu" aria-label="Menu">&#9776;</button><div class="brand"><h1>IBYEREEMAH</h1><small>Scientific Calculator</small></div><button class="ib" id="hbtn" aria-label="History">&#8634;</button><button class="ib" id="gear" aria-label="Settings">&#9881;</button></div>
+  <div class="modes">
+    <button id="mAngle">DEG</button><button id="mFmt" class="on">NORM</button>
+    <button id="mMath">MATH</button><button id="mDeci" class="on">DECI</button>
+  </div>
+  <div class="screen">
+    <div class="fr"><span class="flags" id="flags"></span><b class="wm">IBYEREEMAH</b></div>
+    <div class="inp" id="inp"></div>
+    <div class="sol" id="sol"><span id="solv">= 0</span><button class="cp" id="cp" aria-label="Copy">&#128203;</button></div>
+  </div>
+  <div class="keys" id="keys"></div>
+  <div class="num" id="num"></div>
+  <div class="hist" id="hist"><button class="ib" id="hclose" style="float:right">&#10005;</button><h2>History</h2><div id="hlist"></div></div>
+  <div class="panel" id="panel"><div class="ph"><button class="ib" id="pback">&#8592;</button><h2 id="ptitle"></h2></div><div id="pbody"></div></div>
+  <div class="dr" id="dr"><div class="dp"><div class="dh"><b>IBYEREEMAH</b><small>Scientific Calculator</small></div><div id="dlist"></div></div></div>
+  <div class="toast" id="toast"></div>
+</div>
+<script>
+(function(){
+"use strict";
+/* ---------- State ---------- */
+var S={input:"",ans:0,done:false,shift:false,alpha:false,sto:false,angle:"DEG",fmt:"NORM",math:false,vars:{X:0,Y:0,M:0},hist:[]};
+var ANGLES=["DEG","RAD","GRAD"],FMTS=["NORM","SCI","FIX"];
+
+/* ---------- Key layout ---------- */
+var ROWS=[
+ [{m:"SHIFT",a:"shift",c:"shift"},{m:"ALPHA",a:"alpha",c:"alpha"},{m:"STO",a:"sto"},{m:"RCL",i:"M"},{m:"(",i:"("},{m:")",i:")"}],
+ [{m:"x\u207B\u00B9",i:"^(-1)"},{m:"x\u00B2",i:"^2",s:["x\u00B3","^3"]},{m:"x\u02B8",i:"^",s:["\u02B8\u221Ax","^(1/"]},{m:"\u221Ax",i:"\u221A(",s:["\u221Bx","\u221B("]},{m:"x!",i:"!"},{m:"F\u2194D",a:"fd"}],
+ [{m:"log",i:"log(",s:["10\u02E3","10^("]},{m:"ln",i:"ln(",s:["e\u02E3","e^("]},{m:"sin",i:"sin(",s:["sin\u207B\u00B9","sin\u207B\u00B9("],al:["X","X"]},{m:"cos",i:"cos(",s:["cos\u207B\u00B9","cos\u207B\u00B9("],al:["Y","Y"]},{m:"tan",i:"tan(",s:["tan\u207B\u00B9","tan\u207B\u00B9("],al:["M","M"]},{m:"Abs",i:"abs("}],
+ [{m:"\u03C0",i:"\u03C0"},{m:"e",i:"e"},{m:"nPr",i:"P"},{m:"nCr",i:"C"},{m:"GCD",i:"gcd("},{m:",",i:","}],
+ [{m:"Rand",i:"rand"},{m:"Int",i:"int("},{m:"%",i:"%"},{m:"(\u2212)",i:"\u2212"},{m:"DEL",a:"del",c:"del"},{m:"AC",a:"ac",c:"ac"}]
+];
+var NUM=[
+ ["7","8","9",{m:"\u00F7",i:"\u00F7",c:"op"},{m:"\u00D7",i:"\u00D7",c:"op"}],
+ ["4","5","6",{m:"\u2212",i:"\u2212",c:"op"},{m:"=",a:"eq",c:"eq"}],
+ ["1","2","3",{m:"+",i:"+",c:"op"}],
+ ["0",".",{m:"Exp",i:"E"},{m:"Ans",i:"Ans"}]
+];
+
+/* ---------- Math helpers ---------- */
+function fact(n){if(n<0||n!==Math.floor(n)||n>170)throw 0;var r=1;for(var i=2;i<=n;i++)r*=i;return r}
+function nPr(n,r){if(r>n||r<0||n!==Math.floor(n)||r!==Math.floor(r))throw 0;return fact(n)/fact(n-r)}
+function nCr(n,r){return nPr(n,r)/fact(r)}
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){var t=b;b=a%b;a=t}return a}
+function toR(x){return S.angle==="DEG"?x*Math.PI/180:S.angle==="GRAD"?x*Math.PI/200:x}
+function fromR(x){return S.angle==="DEG"?x*180/Math.PI:S.angle==="GRAD"?x*200/Math.PI:x}
+function tidy(v){return Math.abs(v)<1e-12?0:v}
+function call(f,a){var x=a[0];switch(f){
+ case"sin":return tidy(Math.sin(toR(x)));
+ case"cos":return tidy(Math.cos(toR(x)));
+ case"tan":var t=Math.tan(toR(x));if(Math.abs(t)>1e14)throw 0;return tidy(t);
+ case"asin":return fromR(Math.asin(x));
+ case"acos":return fromR(Math.acos(x));
+ case"atan":return fromR(Math.atan(x));
+ case"log":return Math.log10(x);
+ case"ln":return Math.log(x);
+ case"sqrt":return Math.sqrt(x);
+ case"cbrt":return Math.cbrt(x);
+ case"abs":return Math.abs(x);
+ case"int":return Math.floor(x);
+ case"gcd":return gcd(x,a[1]);
+ }throw 0}
+
+/* ---------- Tokenizer + parser (no eval) ---------- */
+var NAMES=/^(sin\u207B\u00B9|cos\u207B\u00B9|tan\u207B\u00B9|sin|cos|tan|log|ln|abs|int|gcd|rand|Ans|e|P|C|X|Y|M)/;
+var FMAP={"sin\u207B\u00B9":"asin","cos\u207B\u00B9":"acos","tan\u207B\u00B9":"atan"};
+var OPS={"+":"+","-":"-","\u2212":"-","*":"*","\u00D7":"*","/":"/","\u00F7":"/","^":"^","!":"!","%":"%","(":"(",")":")",",":","};
+function tokenize(s){var out=[],m;while(s.length){
+ if(/^\s/.test(s)){s=s.slice(1);continue}
+ if(m=s.match(/^(\d+\.?\d*|\.\d+)(E[+-]?\d+)?/)){out.push({t:"n",v:parseFloat(m[0])});s=s.slice(m[0].length);continue}
+ var c=s[0];
+ if(c==="\u03C0"){out.push({t:"n",v:Math.PI});s=s.slice(1);continue}
+ if(c==="\u221A"){out.push({t:"f",v:"sqrt"});s=s.slice(1);continue}
+ if(c==="\u221B"){out.push({t:"f",v:"cbrt"});s=s.slice(1);continue}
+ if(m=s.match(NAMES)){var w=m[0];s=s.slice(w.length);
+  if(w==="e")out.push({t:"n",v:Math.E});
+  else if(w==="Ans")out.push({t:"n",v:S.ans});
+  else if(w==="rand")out.push({t:"n",v:Math.round(Math.random()*1000)/1000});
+  else if(w==="P"||w==="C")out.push({t:"o",v:w});
+  else if(S.vars.hasOwnProperty(w))out.push({t:"n",v:S.vars[w]});
+  else out.push({t:"f",v:FMAP[w]||w});
+  continue}
+ if(OPS[c]){out.push({t:"o",v:OPS[c]});s=s.slice(1);continue}
+ throw 1}
+ return out}
+function evaluate(str){
+ var tk=tokenize(str),p=0;
+ function pk(){return tk[p]}
+ function isO(v){return pk()&&pk().t==="o"&&pk().v===v}
+ function expr(){var v=term();while(isO("+")||isO("-")){var o=tk[p++].v,r=term();v=o==="+"?v+r:v-r}return v}
+ function term(){var v=unary();for(;;){
+  if(isO("*")){p++;v*=unary()}
+  else if(isO("/")){p++;v/=unary()}
+  else if(pk()&&(pk().t==="n"||pk().t==="f"||isO("("))){v*=unary()}
+  else break}return v}
+ function unary(){if(isO("-")){p++;return -unary()}if(isO("+")){p++;return unary()}return perm()}
+ function perm(){var v=power();while(isO("P")||isO("C")){var o=tk[p++].v,r=power();v=o==="P"?nPr(v,r):nCr(v,r)}return v}
+ function power(){var b=post();if(isO("^")){p++;return Math.pow(b,upow())}return b}
+ function upow(){if(isO("-")){p++;return -upow()}if(isO("+")){p++;return upow()}return power()}
+ function post(){var v=prim();while(isO("!")||isO("%")){var o=tk[p++].v;v=o==="!"?fact(v):v/100}return v}
+ function prim(){var t=tk[p++];if(!t)throw 1;
+  if(t.t==="n")return t.v;
+  if(t.t==="o"&&t.v==="("){var v=expr();if(isO(")"))p++;return v}
+  if(t.t==="f"){if(!isO("("))throw 1;p++;var a=[expr()];while(isO(",")){p++;a.push(expr())}if(isO(")"))p++;return call(t.v,a)}
+  throw 1}
+ if(!tk.length)throw 1;
+ var r=expr();if(p<tk.length)throw 1;
+ if(!isFinite(r)||isNaN(r))throw 0;
+ return r}
+
+/* ---------- Formatting ---------- */
+var CFG={theme:"dark",acc:"Red",bg:"Wine",disp:"Soft pink",keyc:"White",compact:false,large:false,prec:"Auto",thou:false,live:true,sec:true,hint:true};
+function fmt(v){v=parseFloat(v.toPrecision(12));if(CFG.prec!=="Auto"&&!S.math&&S.fmt==="NORM"&&Math.abs(v)<1e10)v=+v.toFixed(+CFG.prec);var t=fmt0(v);if(CFG.thou)t=t.replace(/^(-?\d+)/,function(m){return m.replace(/\B(?=(\d{3})+(?!\d))/g,",")});return t}
+function frac(v){var s=v<0?"-":"",x=Math.abs(v),h1=1,h0=0,k1=0,k0=1,b=x;
+ for(var i=0;i<20;i++){var a=Math.floor(b),h=a*h1+h0,k=a*k1+k0;h0=h1;h1=h;k0=k1;k1=k;
+  if(k>10000)return null;
+  if(Math.abs(x-h/k)<1e-11*Math.max(1,x))return s+h+"/"+k;
+  if(b===a)break;b=1/(b-a)}return null}
+function fmt0(v){v=parseFloat(v.toPrecision(12));
+ if(S.math&&v!==Math.floor(v)){var f=frac(v);if(f)return f}
+ if(S.fmt==="SCI")return v.toExponential(5).replace("e+","E").replace("e","E");
+ if(S.fmt==="FIX")return v.toFixed(4);
+ var a=Math.abs(v);if(a!==0&&(a>=1e10||a<1e-9))return String(parseFloat(v.toExponential(9))).replace("e+","E").replace("e","E");
+ return String(v)}
+
+/* ---------- UI ---------- */
+var $=function(i){return document.getElementById(i)};
+var elInp=$("inp"),elSol=$("sol"),elSolv=$("solv"),elFlags=$("flags"),toastT;
+function toast(t){var e=$("toast");e.textContent=t;e.classList.add("show");clearTimeout(toastT);toastT=setTimeout(function(){e.classList.remove("show")},1400)}
+function render(){
+ elInp.textContent=S.input;
+ var txt="= "+fmt(S.ans),cls="sol";
+ if(S.err){txt=S.err;cls+=" err"}
+ else if(!S.done&&CFG.live){cls+=" prev";try{txt=S.input?"= "+fmt(evaluate(S.input)):"= 0"}catch(e){txt=S.input?"":"= 0"}}
+ elSol.className=cls;elSolv.textContent=txt;
+ elFlags.textContent=[S.shift?"S":"",S.alpha?"A":"",S.sto?"STO\u2192":"",S.angle==="DEG"?"D":S.angle==="RAD"?"R":"G"].filter(Boolean).join("  ");
+ $("mAngle").textContent=S.angle;$("mFmt").textContent=S.fmt;
+ $("mMath").classList.toggle("on",S.math);$("mDeci").classList.toggle("on",!S.math);
+ document.querySelector(".k.shift").classList.toggle("on",S.shift);
+ document.querySelector(".k.alpha").classList.toggle("on",S.alpha)}
+var DELRE=/(sin\u207B\u00B9\(|cos\u207B\u00B9\(|tan\u207B\u00B9\(|sin\(|cos\(|tan\(|log\(|ln\(|\u221A\(|\u221B\(|abs\(|int\(|gcd\(|rand|Ans|[\s\S])$/;
+function insert(s){
+ if(S.done){S.input=/^[+\u00D7\u00F7^!%PC]|^\^/.test(s)?"Ans"+s:s;S.done=false}else S.input+=s;
+ S.err=""}
+function equals(){
+ if(!S.input)return;
+ try{var r=evaluate(S.input);S.hist.unshift({e:S.input,r:r});if(S.hist.length>30)S.hist.pop();S.ans=r;S.done=true;S.err=""}
+ catch(e){S.err=e===1?"Syntax ERROR":"Math ERROR"}
+ render()}
+function press(k){
+ var a=k.a;
+ if(a==="shift"){S.shift=!S.shift;S.alpha=false;return render()}
+ if(a==="alpha"){S.alpha=!S.alpha;S.shift=false;return render()}
+ var ins=k.i;
+ if(S.alpha&&k.al){var L=k.al[1];
+  if(S.sto){S.vars[L]=S.ans;S.sto=false;toast(L+" = "+fmt(S.ans))}else insert(L);
+  S.alpha=false;return render()}
+ if(S.shift&&k.s)ins=k.s[1];
+ S.shift=false;S.alpha=false;
+ if(a==="sto"){S.sto=true;toast("STO: press ALPHA, then sin / cos / tan (X / Y / M)");return render()}
+ if(a==="eq")return equals();
+ if(a==="ac"){S.input="";S.err="";S.done=false;S.sto=false;return render()}
+ if(a==="del"){if(S.done)S.done=false;S.input=S.input.replace(DELRE,"");S.err="";return render()}
+ if(a==="fd"){S.math=!S.math;return render()}
+ if(ins!=null){insert(ins);render()}}
+function build(){
+ var kb=$("keys");
+ ROWS.forEach(function(row){row.forEach(function(k){
+  var b=document.createElement("button");b.className="k "+(k.c||"");b.type="button";
+  var sub="";
+  if(k.s)sub+='<span class="s">'+k.s[0]+"</span>";
+  if(k.al)sub+='<span class="al">'+k.al[0]+"</span>";
+  if(k.sub)sub+='<span class="s">'+k.sub+"</span>";
+  b.innerHTML=(sub?'<span class="sub">'+sub+"</span>":"")+k.m;
+  var tm,lp=0;b.onpointerdown=function(){lp=0;tm=setTimeout(function(){if(CFG.hint&&(k.s||k.al)){lp=1;toast(k.m+" \u2192 "+(k.s?k.s[0]:k.al[0]))}},500)};b.onpointerup=b.onpointerleave=function(){clearTimeout(tm)};b.onclick=function(){if(!lp)press(k);lp=0};kb.appendChild(b)})});
+ var nb=$("num");
+ NUM.forEach(function(row){row.forEach(function(k){
+  if(typeof k==="string")k={m:k,i:k};
+  var b=document.createElement("button");b.className="k "+(k.c||"");b.type="button";b.textContent=k.m;
+  b.onclick=function(){press(k)};nb.appendChild(b)})})}
+function showHist(){
+ var l=$("hlist");l.innerHTML="";
+ if(!S.hist.length)l.innerHTML='<p class="empty">No calculations yet.</p>';
+ S.hist.forEach(function(h){var d=document.createElement("div");d.className="hi";
+  d.innerHTML="<small></small><b></b>";d.firstChild.textContent=h.e;d.lastChild.textContent="= "+fmt(h.r);
+  d.onclick=function(){S.input=h.e;S.done=false;S.err="";$("hist").classList.remove("show");render()};l.appendChild(d)});
+ $("hist").classList.add("show")}
+
+$("mAngle").onclick=function(){S.angle=ANGLES[(ANGLES.indexOf(S.angle)+1)%3];render()};
+$("mFmt").onclick=function(){S.fmt=FMTS[(FMTS.indexOf(S.fmt)+1)%3];render()};
+$("mMath").onclick=function(){S.math=true;render()};
+$("mDeci").onclick=function(){S.math=false;render()};
+$("hbtn").onclick=showHist;
+$("hclose").onclick=function(){$("hist").classList.remove("show")};
+$("cp").onclick=function(){var t=fmt(S.ans);try{navigator.clipboard.writeText(t).then(function(){toast("Copied")},function(){toast(t)})}catch(e){toast(t)}};
+
+document.addEventListener("keydown",function(e){
+ var k=e.key;
+ if(/^[0-9.+\-()!%^,]$/.test(k)){insert(k==="-"?"\u2212":k);render()}
+ else if(k==="*"){insert("\u00D7");render()}
+ else if(k==="/"){e.preventDefault();insert("\u00F7");render()}
+ else if(k==="Enter"||k==="="){e.preventDefault();equals()}
+ else if(k==="Backspace"){press({a:"del"})}
+ else if(k==="Escape"){press({a:"ac"})}});
+
+/* ---------- Tools ---------- */
+var DAY=864e5,AC={Red:"#e5232f",Crimson:"#a50f2c",Orange:"#ff6a1f",Gold:"#e0a100",Green:"#1e9e4a",Cyan:"#0aa5c0",Blue:"#1f5fe0",Purple:"#7b3fe4",Magenta:"#d6249f",Pink:"#ff5c8a"};
+var BG={Wine:["#3d0b12","#1c0509","#7a1c26","#4a0f17","#ff9aa5"],Black:["#1c1c1c","#000","#444","#262626","#bbb"],Navy:["#0f2447","#0a1630","#23406e","#122b52","#7fa6e8"],Forest:["#0d3b24","#06200f","#1f6a43","#0f4a2d","#8fe0b0"],Purple:["#2d1250","#16082b","#5a2c93","#3a1a66","#c8a6ff"],Slate:["#2b3a4a","#18222c","#46586b","#34475a","#a9c0d6"],Brown:["#3b2414","#1d1109","#6e4528","#4a2e1a","#e0b88f"]};
+var DISP={"Soft pink":["#ffe4e1","#3a0a10"],Lime:["#e6efc3","#10203f"],Ice:["#dff1ff","#0b2a44"],White:["#ffffff","#111111"],Amber:["#ffe9b0","#3a2500"],"Night green":["#0e1a14","#7dff9b"],Black:["#111","#ff5a5a"]};
+var KEYC={White:["#ffffff","#1a2a4a"],Cream:["#fff3e0","#3a2a10"],Rose:["#ffe0e6","#6a0f26"],Mint:["#e0fff0","#0d4a2d"],Sky:["#e0f0ff","#0d2a5a"],Dark:["#2c2c32","#ffffff"]};
+var esc=function(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;")};
+function nm(v){var x=parseFloat(v);if(isNaN(x))throw"Enter valid numbers";return x}
+function lst(s){var a=String(s).split(/[\s,;]+/).filter(Boolean).map(Number);if(!a.length||a.some(isNaN))throw"Enter numbers separated by commas";return a}
+function R(x){return isFinite(x)?String(parseFloat(x.toPrecision(10))):"undefined"}
+function mon(x){return x.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+function sum(a){return a.reduce(function(s,x){return s+x},0)}
+function today(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+function pd(s){var p=String(s).split("-");if(p.length!==3||isNaN(+p[0]))throw"Pick a valid date";return new Date(+p[0],+p[1]-1,+p[2])}
+function ymd(a,b){var y=b.getFullYear()-a.getFullYear(),m=b.getMonth()-a.getMonth(),d=b.getDate()-a.getDate();if(d<0){m--;d+=new Date(b.getFullYear(),b.getMonth(),0).getDate()}if(m<0){y--;m+=12}return y+" y  "+m+" m  "+d+" d"}
+function fx(ex,x){var o=S.vars.X;S.vars.X=x;try{return evaluate(ex.replace(/x/g,"X"))}finally{S.vars.X=o}}
+function roots(ex,a,b){var out=[],N=2000,st=(b-a)/N,px=a,py=NaN;for(var i=0;i<=N;i++){var x=a+i*st,y;try{y=fx(ex,x)}catch(e){y=NaN}
+ if(isFinite(y)){if(y===0)out.push(x);else if(isFinite(py)&&py*y<0){var l=px,h=x,fl=py;for(var k=0;k<60;k++){var m=(l+h)/2,fm=fx(ex,m);if(fl*fm<=0)h=m;else{l=m;fl=fm}}if(Math.abs(fx(ex,(l+h)/2))<1e-3)out.push((l+h)/2)}}px=x;py=y}
+ return out.map(function(r){return parseFloat(r.toPrecision(8))}).filter(function(r,i,A){return A.indexOf(r)===i})}
+var UN={m:["L",1],km:["L",1000],cm:["L",.01],mm:["L",.001],mi:["L",1609.344],ft:["L",.3048],"in":["L",.0254],yd:["L",.9144],kg:["M",1],g:["M",.001],mg:["M",1e-6],lb:["M",.45359237],oz:["M",.028349523],t:["M",1000],"m\u00B2":["A",1],"km\u00B2":["A",1e6],ha:["A",1e4],acre:["A",4046.8564],"ft\u00B2":["A",.09290304],L:["V",1],mL:["V",.001],"m\u00B3":["V",1000],gal:["V",3.785411784],cup:["V",.2365882365],"m/s":["S",1],"km/h":["S",1/3.6],mph:["S",.44704],kn:["S",.514444],"\u00B0C":["T"],"\u00B0F":["T"],K:["T"]};
+var UK=Object.keys(UN);
+var CUR={USD:1,EUR:.92,GBP:.79,NGN:1500,GHS:12,KES:129,ZAR:18,INR:88,JPY:150,CNY:7.2,CAD:1.36,AED:3.67,SAR:3.75},CK=Object.keys(CUR);
+var KONST=[["\u03C0","Pi",Math.PI,"","Math"],["e","Euler's number",Math.E,"","Math"],["\u03C6","Golden ratio",(1+Math.sqrt(5))/2,"","Math"],["c","Speed of light",299792458,"m/s","Physics"],["G","Gravitational constant",6.6743e-11,"m\u00B3/(kg\u00B7s\u00B2)","Physics"],["h","Planck constant",6.62607015e-34,"J\u00B7s","Physics"],["g","Standard gravity",9.80665,"m/s\u00B2","Physics"],["k","Boltzmann constant",1.380649e-23,"J/K","Physics"],["q","Elementary charge",1.602176634e-19,"C","Physics"],["m\u2091","Electron mass",9.1093837015e-31,"kg","Physics"],["N\u2090","Avogadro number",6.02214076e23,"1/mol","Chemistry"],["R","Gas constant",8.314462618,"J/(mol\u00B7K)","Chemistry"],["\u03B5\u2080","Vacuum permittivity",8.8541878128e-12,"F/m","Engineering"],["\u03BC\u2080","Vacuum permeability",1.25663706212e-6,"H/m","Engineering"]];
+function pm(s){var m=String(s).trim().split(/;|\n/).map(function(r){return r.trim().split(/[\s,]+/).map(Number)});if(m.some(function(r){return r.length!==m[0].length||r.some(isNaN)}))throw"Use rows separated by ; e.g. 1 2; 3 4";return m}
+function sm(m){return m.map(function(r){return r.map(R).join("   ")}).join("\n")}
+function det(m){var n=m.length;if(n!==m[0].length)throw"Matrix must be square";var a=m.map(function(r){return r.slice()}),d=1,i,j,k;for(i=0;i<n;i++){var p=i;for(j=i+1;j<n;j++)if(Math.abs(a[j][i])>Math.abs(a[p][i]))p=j;if(Math.abs(a[p][i])<1e-12)return 0;if(p!==i){var t=a[p];a[p]=a[i];a[i]=t;d=-d}d*=a[i][i];for(j=i+1;j<n;j++){var f=a[j][i]/a[i][i];for(k=i;k<n;k++)a[j][k]-=f*a[i][k]}}return d}
+function inv(m){var n=m.length;if(det(m)===0)throw"Singular matrix: no inverse";var a=m.map(function(r,i){return r.concat(r.map(function(_,j){return i===j?1:0}))}),i,j;for(i=0;i<n;i++){var p=i;for(j=i+1;j<n;j++)if(Math.abs(a[j][i])>Math.abs(a[p][i]))p=j;var t=a[p];a[p]=a[i];a[i]=t;var d=a[i][i];a[i]=a[i].map(function(x){return x/d});for(j=0;j<n;j++)if(j!==i){var f=a[j][i],ai=a[i];a[j]=a[j].map(function(x,k){return x-f*ai[k]})}}return a.map(function(r){return r.slice(n)})}
+function mul(a,b){if(a[0].length!==b.length)throw"Columns of A must equal rows of B";return a.map(function(r){return b[0].map(function(_,j){return r.reduce(function(s,x,k){return s+x*b[k][j]},0)})})}
+function pc(s){var t=String(s).replace(/\s/g,"").match(/[+-]?[^+-]+/g);if(!t)throw"Use the form 3+4i";var re=0,im=0;t.forEach(function(u){if(/i$/.test(u)){var c=u.slice(0,-1);im+=c===""||c==="+"?1:c==="-"?-1:nm(c)}else re+=nm(u)});return[re,im]}
+function sc(z){return R(z[0])+(z[1]<0?" \u2212 ":" + ")+R(Math.abs(z[1]))+"i"}
+function vc(s,n){var a=lst(s);if(n&&a.length!==n)throw"Vector needs "+n+" numbers";return a}
+var GR={"A+":4,A:4,"A-":3.7,"B+":3.3,B:3,"B-":2.7,"C+":2.3,C:2,"C-":1.7,"D+":1.3,D:1,F:0};
+var T={
+conv:{t:"Converter",f:[["v","Value","1"],["a","From","",UK,"km"],["b","To","",UK,"mi"]],run:function(v){var a=UN[v.a],b=UN[v.b],x=nm(v.v);if(a[0]!==b[0])throw"Units must be the same type";var r;
+ if(a[0]==="T"){var c=v.a==="\u00B0F"?(x-32)*5/9:v.a==="K"?x-273.15:x;r=v.b==="\u00B0F"?c*9/5+32:v.b==="K"?c+273.15:c}else r=x*a[1]/b[1];return[["Result",R(r)+" "+v.b]]}},
+fd:{t:"Fraction / Decimal",f:[["v","Decimal (0.5) or fraction (1/2)","0.5"]],run:function(v){var s=v.v.trim();if(s.indexOf("/")>0){var p=s.split("/"),d=nm(p[0])/nm(p[1]);return[["Decimal",R(d)]]}var x=nm(s),f=frac(x);return[["Fraction",f||(Number.isInteger(x)?x+"/1":"No simple fraction")]]}},
+solve:{t:"Solver",f:[["k","Type","",["Quadratic ax\u00B2+bx+c=0","Linear ax+b=0","f(x)=0 numeric"],"Quadratic ax\u00B2+bx+c=0"],["a","a","1"],["b","b","2"],["c","c","-3"],["e","f(x) for numeric type","x^2-4"]],run:function(v){var t=v.k.charAt(0);
+ if(t==="f"){var r=roots(v.e,-50,50);return[["Roots in [-50, 50]",r.length?r.join("\n"):"None found"]]}
+ var a=nm(v.a),b=nm(v.b);if(t==="L"){if(!a)throw"a must not be 0";return[["x",R(-b/a)]]}
+ var c=nm(v.c);if(!a)throw"a must not be 0";var D=b*b-4*a*c,vx=-b/(2*a),rows=[["Discriminant",R(D)]];
+ if(D>=0){rows.push(["x\u2081",R((-b+Math.sqrt(D))/(2*a))],["x\u2082",R((-b-Math.sqrt(D))/(2*a))])}else{var im=Math.sqrt(-D)/(2*a);rows.push(["x\u2081",sc([vx,im])],["x\u2082",sc([vx,-im])])}
+ rows.push(["Vertex","("+R(vx)+", "+R(a*vx*vx+b*vx+c)+")"]);return rows}},
+graph:{t:"Graphing",g:1,f:[["e","y = f(x)","x^2-4"],["a","x min","-10"],["b","x max","10"]],run:function(v){var r=roots(v.e,nm(v.a),nm(v.b));return[["x-intercepts",r.length?r.join(", "):"None in range"],["Angle mode",S.angle]]}},
+mat:{t:"Matrix",f:[["o","Operation","",["Determinant","Inverse","Transpose","A \u00D7 B","A + B"],"Determinant"],["a","Matrix A (rows split by ;)","1 2; 3 4"],["b","Matrix B","5 6; 7 8"]],run:function(v){var A=pm(v.a),o=v.o;
+ if(o==="Determinant")return[["det(A)",R(det(A))]];if(o==="Inverse")return[["A\u207B\u00B9",sm(inv(A))]];
+ if(o==="Transpose")return[["A\u1D40",sm(A[0].map(function(_,j){return A.map(function(r){return r[j]})}))]];
+ var B=pm(v.b);if(o==="A + B"){if(A.length!==B.length||A[0].length!==B[0].length)throw"Matrices must have the same size";return[["A + B",sm(A.map(function(r,i){return r.map(function(x,j){return x+B[i][j]})}))]]}
+ return[["A \u00D7 B",sm(mul(A,B))]]}},
+vec:{t:"Vector",f:[["o","Operation","",["Dot product","Cross product (3D)","Magnitude of A","Angle between","A + B","A \u2212 B"],"Dot product"],["a","Vector A","1, 2, 3"],["b","Vector B","4, 5, 6"]],run:function(v){var A=vc(v.a),o=v.o,mg=function(x){return Math.sqrt(sum(x.map(function(i){return i*i})))};
+ if(o==="Magnitude of A")return[["|A|",R(mg(A))]];var B=vc(v.b);if(A.length!==B.length)throw"Vectors must have the same size";
+ var dot=sum(A.map(function(x,i){return x*B[i]}));if(o==="Dot product")return[["A\u00B7B",R(dot)]];
+ if(o==="Angle between")return[["Angle (degrees)",R(Math.acos(dot/(mg(A)*mg(B)))*180/Math.PI)]];
+ if(o==="A + B")return[["A + B","("+A.map(function(x,i){return R(x+B[i])}).join(", ")+")"]];
+ if(o==="A \u2212 B")return[["A \u2212 B","("+A.map(function(x,i){return R(x-B[i])}).join(", ")+")"]];
+ if(A.length!==3)throw"Cross product needs 3D vectors";return[["A\u00D7B","("+R(A[1]*B[2]-A[2]*B[1])+", "+R(A[2]*B[0]-A[0]*B[2])+", "+R(A[0]*B[1]-A[1]*B[0])+")"]]}},
+stat:{t:"Statistics",f:[["k","Mode","",["Single variable","X,Y regression"],"Single variable"],["x","x values","1, 2, 3, 4, 5, 6"],["y","y values (regression)","2, 4, 5, 4, 5, 7"]],run:function(v){var x=lst(v.x),n=x.length,m=sum(x)/n,s=x.slice().sort(function(a,b){return a-b});
+ if(v.k.charAt(0)==="X"){var y=lst(v.y);if(y.length!==n)throw"Both lists must have the same count";var my=sum(y)/n,sxx=0,syy=0,sxy=0;x.forEach(function(a,i){sxx+=(a-m)*(a-m);syy+=(y[i]-my)*(y[i]-my);sxy+=(a-m)*(y[i]-my)});var b=sxy/sxx,r=sxy/Math.sqrt(sxx*syy);
+  return[["n",n],["Slope (b)",R(b)],["Intercept (a)",R(my-b*m)],["Correlation r",R(r)],["r\u00B2",R(r*r)],["Equation","y = "+R(my-b*m)+" + "+R(b)+"x"]]}
+ var ss=sum(x.map(function(a){return(a-m)*(a-m)})),md=n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2;
+ return[["n",n],["Sum \u03A3x",R(sum(x))],["\u03A3x\u00B2",R(sum(x.map(function(a){return a*a})))],["Mean",R(m)],["Median",R(md)],["Min / Max",R(s[0])+" / "+R(s[n-1])],["Range",R(s[n-1]-s[0])],["Population \u03C3",R(Math.sqrt(ss/n))],["Sample s",n>1?R(Math.sqrt(ss/(n-1))):"\u2014"],["Variance (pop)",R(ss/n)]]}},
+cx:{t:"Complex Numbers",f:[["o","Operation","",["A + B","A \u2212 B","A \u00D7 B","A \u00F7 B","|A| and angle","Conjugate of A"],"A \u00D7 B"],["a","A","3+4i"],["b","B","1-2i"]],run:function(v){var A=pc(v.a),o=v.o,z;
+ if(o==="|A| and angle")return[["|A|",R(Math.hypot(A[0],A[1]))],["Angle (deg)",R(Math.atan2(A[1],A[0])*180/Math.PI)]];if(o==="Conjugate of A")return[["A*",sc([A[0],-A[1]])]];
+ var B=pc(v.b);if(o==="A + B")z=[A[0]+B[0],A[1]+B[1]];else if(o==="A \u2212 B")z=[A[0]-B[0],A[1]-B[1]];else if(o==="A \u00D7 B")z=[A[0]*B[0]-A[1]*B[1],A[0]*B[1]+A[1]*B[0]];
+ else{var d=B[0]*B[0]+B[1]*B[1];if(!d)throw"Cannot divide by 0";z=[(A[0]*B[0]+A[1]*B[1])/d,(A[1]*B[0]-A[0]*B[1])/d]}return[["Result",sc(z)],["|Result|",R(Math.hypot(z[0],z[1]))]]}},
+cur:{t:"Currency (offline rates)",f:[["v","Amount","100"],["a","From","",CK,"USD"],["b","To","",CK,"NGN"],["r","Live rate (optional: 1 From = ? To)",""]],run:function(v){var r=v.r?nm(v.r):CUR[v.b]/CUR[v.a];return[["Result",mon(nm(v.v)*r)+" "+v.b],["Rate used",R(r)],["Note","Built-in rates are approximate. Enter a live rate to override."]]}},
+age:{t:"Age",f:[["d","Date of birth","2000-01-01","date"],["n","Today's date","today","date"]],run:function(v){var d=pd(v.d),n=pd(v.n);if(d>n)throw"Birth date is after today's date";var nb=new Date(n.getFullYear(),d.getMonth(),d.getDate());if(nb<n)nb.setFullYear(nb.getFullYear()+1);var dy=Math.round((nb-n)/DAY),mo=Math.floor(dy/30.44);
+ return[["Age",ymd(d,n)],["Days lived",Math.round((n-d)/DAY)],["Next birthday",nb.toLocaleDateString(undefined,{weekday:"long"})],["In",mo+" months "+Math.round(dy-mo*30.44)+" days"]]}},
+date:{t:"Date",f:[["a","From","today","date"],["b","To","2027-01-01","date"],["n","Add days to From","30"]],run:function(v){var a=pd(v.a),b=pd(v.b),dd=Math.round((b-a)/DAY),r=new Date(a.getTime()+nm(v.n)*DAY);return[["Difference",ymd(dd<0?b:a,dd<0?a:b)],["Days / weeks",dd+" / "+R(dd/7)],["From + days",r.toLocaleDateString(undefined,{weekday:"short",year:"numeric",month:"short",day:"numeric"})]]}},
+disc:{t:"Discount",f:[["p","Price","100"],["d","Discount %","15"]],run:function(v){var p=nm(v.p),s=p*nm(v.d)/100;return[["You save",mon(s)],["Final price",mon(p-s)]]}},
+tip:{t:"Tip",f:[["b","Bill","50"],["t","Tip %","10"],["n","People","2"]],run:function(v){var b=nm(v.b),t=b*nm(v.t)/100,n=Math.max(1,nm(v.n));return[["Tip",mon(t)],["Total",mon(b+t)],["Per person",mon((b+t)/n)]]}},
+tax:{t:"Sales Tax",f:[["m","Mode","",["Add tax","Remove tax"],"Add tax"],["p","Amount","100"],["r","Tax rate %","7.5"]],run:function(v){var p=nm(v.p),r=nm(v.r)/100;if(v.m==="Add tax")return[["Tax",mon(p*r)],["Total",mon(p*(1+r))]];var n=p/(1+r);return[["Before tax",mon(n)],["Tax",mon(p-n)]]}},
+loan:{t:"Loan",f:[["p","Loan amount","10000"],["r","Annual rate %","12"],["y","Years","3"]],run:function(v){var P=nm(v.p),r=nm(v.r)/1200,n=nm(v.y)*12,pay=r?P*r/(1-Math.pow(1+r,-n)):P/n;return[["Monthly payment",mon(pay)],["Total payment",mon(pay*n)],["Total interest",mon(pay*n-P)]]}},
+fcost:{t:"Fuel Cost",f:[["d","Distance (km)","100"],["e","Efficiency (km/L)","12"],["p","Price per litre","1.2"]],run:function(v){var l=nm(v.d)/nm(v.e);return[["Fuel needed",R(l)+" L"],["Cost",mon(l*nm(v.p))]]}},
+feff:{t:"Fuel Efficiency",f:[["d","Distance (km)","100"],["l","Fuel used (L)","8"]],run:function(v){var d=nm(v.d),l=nm(v.l);return[["km/L",R(d/l)],["L/100 km",R(l/d*100)],["MPG (US)",R(d/1.609344/(l/3.785411784))]]}},
+gpa:{t:"GPA (4.0 scale)",f:[["g","Grades (A, B+, C...)","A, B+, A-, C"],["c","Credits","3, 3, 2, 4"]],run:function(v){var g=v.g.split(/[\s,;]+/).filter(Boolean).map(function(x){x=x.toUpperCase();if(!(x in GR))throw"Unknown grade: "+x;return GR[x]}),c=lst(v.c);if(g.length!==c.length)throw"Grades and credits need the same count";var cr=sum(c);return[["GPA",R(sum(g.map(function(x,i){return x*c[i]}))/cr)],["Total credits",R(cr)]]}},
+hlth:{t:"Health",f:[["w","Weight (kg)","70"],["h","Height (cm)","175"],["a","Age","25"],["s","Sex","",["Male","Female"],"Male"]],run:function(v){var w=nm(v.w),h=nm(v.h)/100,b=w/(h*h),cat=b<18.5?"Underweight":b<25?"Normal":b<30?"Overweight":"Obese";
+ return[["BMI",R(Math.round(b*10)/10)+" ("+cat+")"],["Healthy weight",R(18.5*h*h)+" \u2013 "+R(24.9*h*h)+" kg"],["BMR",Math.round(10*w+6.25*h*100-5*nm(v.a)+(v.s==="Male"?5:-161))+" kcal/day"]]}},
+hex:{t:"Hexadecimal",f:[["v","Value","255"],["b","Input base","",["2","8","10","16"],"10"]],run:function(v){var n=parseInt(v.v,+v.b);if(isNaN(n))throw"Not valid in base "+v.b;return[["Binary",n.toString(2)],["Octal",n.toString(8)],["Decimal",n.toString(10)],["Hex",n.toString(16).toUpperCase()]]}}
+};
+/* ---------- Panels ---------- */
+var P=$("panel"),pt=$("ptitle"),pb=$("pbody"),DR=$("dr"),CALC=$("calc");
+function openP(t){pt.textContent=t;pb.innerHTML="";P.classList.add("show");P.scrollTop=0}
+function closeP(){P.classList.remove("show")}
+function draw(v){var cv=$("cv"),c=cv.getContext("2d"),W=cv.width,H=cv.height,x0=nm(v.a),x1=nm(v.b),ys=[],i;if(x0>=x1)throw"x min must be less than x max";
+ for(i=0;i<=W;i++){var y;try{y=fx(v.e,x0+(x1-x0)*i/W)}catch(e){y=NaN}ys.push(y)}
+ var f=ys.filter(isFinite).sort(function(a,b){return a-b});if(!f.length)throw"Nothing to plot";var n=f.length,lo=f[Math.floor(.01*(n-1))],hi=f[Math.ceil(.99*(n-1))];if(hi-lo<1e-9){hi+=1;lo-=1}var pd2=(hi-lo)*.1;lo-=pd2;hi+=pd2;
+ var X=function(x){return(x-x0)/(x1-x0)*W},Y=function(y){return H-(y-lo)/(hi-lo)*H};
+ c.fillStyle="#fff";c.fillRect(0,0,W,H);c.strokeStyle="#bbb";c.lineWidth=1;c.fillStyle="#555";c.font="18px sans-serif";c.beginPath();
+ if(lo<0&&hi>0){c.moveTo(0,Y(0));c.lineTo(W,Y(0))}if(x0<0&&x1>0){c.moveTo(X(0),0);c.lineTo(X(0),H)}c.stroke();
+ c.fillText(R(x0),4,H-6);c.fillText(R(x1),W-70,H-6);c.fillText(R(hi),4,18);c.fillText(R(lo),4,H-26);
+ c.strokeStyle=AC[CFG.acc];c.lineWidth=3;c.beginPath();var up=false,py=0;ys.forEach(function(y,i){if(!isFinite(y)){up=false;return}var yy=Y(y);if(!up||Math.abs(yy-py)>H*1.5){c.moveTo(i,yy);up=true}else c.lineTo(i,yy);py=yy});c.stroke()}
+function runTool(t){var v={};t.f.forEach(function(f){v[f[0]]=$("f_"+f[0]).value});var o=$("res");
+ try{o.innerHTML=t.run(v).map(function(r){return'<div class="rw"><span>'+esc(r[0])+"</span><span>"+esc(r[1])+"</span></div>"}).join("");if(t.g)draw(v)}
+ catch(e){o.innerHTML='<div class="rw e">'+esc(typeof e==="string"?e:"Check your input")+"</div>"}}
+function openTool(id){var t=T[id];openP(t.t);
+ pb.innerHTML=t.f.map(function(f){var k=f[0],d=f[2]==="today"?today():f[2],c;
+  if(f[3]&&f[3].join)c='<select id="f_'+k+'">'+f[3].map(function(o){return"<option"+(o===f[4]?" selected":"")+">"+o+"</option>"}).join("")+"</select>";
+  else c='<input id="f_'+k+'" value="'+esc(d)+'"'+(f[3]==="date"?' type="date"':"")+">";
+  return'<label class="fld">'+f[1]+c+"</label>"}).join("")+'<div class="btns"><button class="go" id="go">Calculate</button><button id="clr">Clear</button></div><div class="res" id="res"></div>'+(t.g?'<canvas id="cv" width="640" height="440"></canvas>':"");
+ $("go").onclick=function(){runTool(t)};
+ $("clr").onclick=function(){t.f.forEach(function(f){var e=$("f_"+f[0]);if(e.tagName!=="SELECT")e.value=""});$("res").innerHTML=""};
+ runTool(t)}
+function openConst(){openP("Constants");pb.innerHTML='<label class="fld"><input id="q" placeholder="Search constants or category"></label><div id="kl"></div>';
+ function show(){var q=$("q").value.toLowerCase();$("kl").innerHTML="";KONST.forEach(function(k){if((k[0]+k[1]+k[4]).toLowerCase().indexOf(q)<0)return;var s=String(k[2]).replace("e","E").replace("E+","E"),d=document.createElement("div");d.className="kc";
+  d.innerHTML="<b></b><small></small><div class=\"btns\"><button>Copy</button><button class=\"go\">Insert</button></div>";d.querySelector("b").textContent=k[0]+"  "+k[1]+"  ("+k[4]+")";d.querySelector("small").textContent=s+" "+k[3];
+  var b=d.querySelectorAll("button");b[0].onclick=function(){try{navigator.clipboard.writeText(s)}catch(e){}toast("Copied "+k[0])};b[1].onclick=function(){insert(s);closeP();render()};$("kl").appendChild(d)})}
+ $("q").oninput=show;show()}
+function gk(k){return k==="angle"?S.angle:k==="fmt"?S.fmt:CFG[k]}
+function sk(k,v){if(k==="angle")S.angle=v;else if(k==="fmt")S.fmt=v;else CFG[k]=v}
+function apply(){CALC.classList.toggle("lt",CFG.theme==="light");CALC.classList.toggle("cmp",!!CFG.compact);CALC.classList.toggle("lg",!!CFG.large);CALC.classList.toggle("nosec",!CFG.sec);var st=CALC.style,L=CFG.theme==="light";st.setProperty("--a",AC[CFG.acc]);
+ ["--b1","--b2","--ln","--pn","--mt"].forEach(function(n,i){if(L)st.removeProperty(n);else st.setProperty(n,BG[CFG.bg][i])});
+ st.setProperty("--sc",DISP[CFG.disp][0]);st.setProperty("--sct",DISP[CFG.disp][1]);st.setProperty("--kb",KEYC[CFG.keyc][0]);st.setProperty("--kt",KEYC[CFG.keyc][1]);render()}
+function openSet(){openP("Settings");var rows=[["Theme","theme",["dark","light"]],["Accent style","acc",Object.keys(AC)],["Background (dark theme)","bg",Object.keys(BG)],["Display color","disp",Object.keys(DISP)],["Key color","keyc",Object.keys(KEYC)],["Compact keypad","compact"],["Large display","large"],["Default angle mode","angle",ANGLES],["Number format","fmt",FMTS],["Decimal precision","prec",["Auto","2","4","6","8"]],["Thousands separator","thou"],["Live result","live"],["Secondary labels","sec"],["Long-press hints","hint"]];
+ pb.innerHTML=rows.map(function(r){var c=gk(r[1]);return'<div class="sw"><span>'+r[0]+"</span>"+(r[2]?'<select data-k="'+r[1]+'">'+r[2].map(function(o){return"<option"+(o===c?" selected":"")+">"+o+"</option>"}).join("")+"</select>":'<input type="checkbox" data-k="'+r[1]+'"'+(c?" checked":"")+">")+"</div>"}).join("");
+ [].forEach.call(pb.querySelectorAll("[data-k]"),function(e){e.onchange=function(){sk(e.dataset.k,e.type==="checkbox"?e.checked:e.value);apply()}})}
+var ORDER=[["calc","Calculator"],["hist","History"],["const","Constants"],["conv","Converter"],["fd","Fraction / Decimal"],["solve","Solver"],["graph","Graphing"],["mat","Matrix"],["vec","Vector"],["stat","Statistics"],["cx","Complex Numbers"],["--","MORE CALCULATORS"],["cur","Currency"],["age","Age"],["date","Date"],["disc","Discount"],["tip","Tip"],["tax","Sales Tax"],["loan","Loan"],["fcost","Fuel Cost"],["feff","Fuel Efficiency"],["gpa","GPA"],["hlth","Health"],["hex","Hexadecimal"],["--","APP"],["set","Settings"]];
+ORDER.forEach(function(o){var l=$("dlist");if(o[0]==="--"){var h=document.createElement("h3");h.textContent=o[1];return l.appendChild(h)}
+ var b=document.createElement("button");b.textContent=o[1];b.onclick=function(){DR.classList.remove("show");closeP();var id=o[0];if(id==="hist")showHist();else if(id==="const")openConst();else if(id==="set")openSet();else if(T[id])openTool(id)};l.appendChild(b)});
+$("menu").onclick=function(){DR.classList.add("show")};
+DR.onclick=function(e){if(e.target===DR)DR.classList.remove("show")};
+$("pback").onclick=closeP;$("gear").onclick=openSet;
+
+build();render();
+})();
+</script>
+</body>
+</html>
